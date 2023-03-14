@@ -1,9 +1,13 @@
-import {Router, Request, Response} from 'express';
+import { Router, Request, Response } from 'express';
+import { UserController } from './controllers/UserController';
+
+const userController = new UserController();
 
 const router = Router();
 
-router.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
-} );
+router.get('/', userController.index);
 
-export  {router};
+router.post('/cadastrar', userController.registerEmail);
+
+router.post('/disparar-email-usuarios', userController.sendEmailToAllUsers);
+export default router;
