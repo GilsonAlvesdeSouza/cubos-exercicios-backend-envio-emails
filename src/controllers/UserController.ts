@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { Request, Response } from 'express';
 import { UserServices } from '../services/UserServices';
 import { getErrorMessage } from '../utils/handleError';
-import { UserInterface } from '../models/UserInterface';
+import compilerHTML from '../utils/compilerHTML';
 
 const userServices = new UserServices();
 
@@ -48,12 +48,20 @@ export class UserController {
 		}
 
 		try {
-			await transporter.sendMail({
-				from: `${process.env.EMAIL_NAME} <${process.env.EMAIL_FROM}>`,
-				to: users.map((user: UserInterface) => user.email),
-				subject: subject,
-				text: message
-			});
+			for (const user of users) {
+				const html = await compilerHTML('./src/templates/shootEmail.html', {
+					subject,
+					message,
+					name: user.name
+				});
+
+				transporter.sendMail({
+					from: `${process.env.EMAIL_NAME} <${process.env.EMAIL_FROM}>`,
+					to: `${user.name} <${user.email}>`,
+					subject: subject,
+					html
+				});
+			}
 			res.json({ message: 'emails enviados' });
 		} catch (e) {
 			return res.status(400).json({ error: getErrorMessage(e) });
