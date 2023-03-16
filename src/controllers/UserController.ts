@@ -1,19 +1,25 @@
 import transporter from '../connection/email_connection';
 import 'dotenv/config';
 import { Request, Response } from 'express';
-import { UserServices } from '../services/UserServices';
 import { getErrorMessage } from '../utils/handleError';
 import compilerHTML from '../utils/compilerHTML';
-
-const userServices = new UserServices();
+import IUserServices from '../services/IUserServices';
+import { IUser } from '../models/IUser';
 
 export class UserController {
-	async index(req: Request, res: Response) {
-		const users = await userServices.all();
+	readonly userServices: IUserServices;
+	constructor(userServices: IUserServices) {
+		this.userServices = userServices;
+		this.findAll = this.findAll.bind(this);
+		this.registerEmail = this.registerEmail.bind(this);
+		this.sendEmailToAllUsers = this.sendEmailToAllUsers.bind(this);
+	}
+	async findAll(req: Request, res: Response): Promise<Response> {
+		const users: IUser[] = await this.userServices.findAll();
 		return res.json(users);
 	}
 
-	async registerEmail(req: Request, res: Response) {
+	async registerEmail(req: Request, res: Response): Promise<Response> {
 		const { name, email } = req.body;
 
 		if (!name || name === '') {
@@ -24,16 +30,16 @@ export class UserController {
 			return res.status(400).json({ error: 'Email é obrigatório' });
 		}
 		try {
-			const user = await userServices.save({ name, email });
+			const user = await this.userServices.registerEmail({ name, email });
 			return res.json(user);
 		} catch (e) {
 			return res.status(400).json({ error: getErrorMessage(e) });
 		}
 	}
 
-	async sendEmailToAllUsers(req: Request, res: Response) {
+	async sendEmailToAllUsers(req: Request, res: Response): Promise<Response> {
 		const { message, subject } = req.body;
-		const users = await userServices.all();
+		const users = await this.userServices.findAll();
 
 		if (!message || message === '') {
 			return res.status(400).json({ error: 'Mensagem é obrigatória' });
@@ -62,7 +68,7 @@ export class UserController {
 					html
 				});
 			}
-			res.json({ message: 'emails enviados' });
+			return res.json({ message: 'emails enviados' });
 		} catch (e) {
 			return res.status(400).json({ error: getErrorMessage(e) });
 		}

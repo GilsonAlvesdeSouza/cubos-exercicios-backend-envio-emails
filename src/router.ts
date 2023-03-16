@@ -1,11 +1,12 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { UserController } from './controllers/UserController';
+import { UserServices } from './services/UserServices';
 
-const userController = new UserController();
+const userController = new UserController(new UserServices());
 
 const router = Router();
 
-router.get('/', userController.index);
+router.get('/', userController.findAll);
 
 router.post('/cadastrar', userController.registerEmail);
 

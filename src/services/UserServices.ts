@@ -1,20 +1,21 @@
-import { UserInterface } from '../models/UserInterface';
 import KnexInstance from '../connection/db_connection';
+import { IUser } from '../models/IUser';
+import IUserServices from './IUserServices';
 
-export class UserServices {
-	async all() {
-		const users = await KnexInstance<UserInterface>('users').select('*');
+export class UserServices implements IUserServices {
+	async findAll(): Promise<IUser[]> {
+		const users = await KnexInstance<IUser>('users').select('*');
 		return users;
 	}
 
-	async save({ name, email }: Partial<UserInterface>) {
-		const verificaEmail = await KnexInstance<UserInterface>('users').where('email', email).first();
+	async registerEmail({ name, email }: Partial<IUser>): Promise<Partial<IUser>> {
+		const verificaEmail = await KnexInstance<IUser>('users').where('email', email).first();
 
 		if (verificaEmail) {
 			throw new Error('Email já cadastrado');
 		}
 
-		const user = await KnexInstance<UserInterface>('users')
+		const user = await KnexInstance<IUser>('users')
 			.insert({ name, email })
 			.returning(['name', 'email'])
 			.then((user) => user[0]);
